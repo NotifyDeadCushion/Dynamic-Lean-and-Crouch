@@ -19,21 +19,24 @@ function on_mcm_load()
 				{ id = "divider", type = "line" },
 				{ id = "sprint_removes_stance_and_lean", type = "check", val = 1, def = true },
 				{ id = "default_reset_timer", type = "track", val = 2, def = 5, min = 0, max = 60, step = 1 },
+				{ id = "general_adjustment_keybind_header", type = "slide", text = "dlac_adjustment_keybind_title", size = {512,50}, spacing = 10 },
+				{ id = "adjustment_keybind", type = "key_bind", val = 2, def = DIK_keys.DIK_LMENU, },
 			}
 		},
 		{ id = "lean_dlac", text = "dlac_lean_title", sh = true, gr =
 			{
 				{ id = "lean_title", type = "slide", link = "AMCM_Banner.dds", text = "dlac_lean_title", size = {512,50}, spacing = 20 },
+
 				{ id = "adjustment_mode", type = "list", val = 0, def = "mouse_move", content = {{"mouse_move", "mouse_move"}, {"keybind", "keybind"}} },
-				{ id = "mouse_sensitivity_factor", type = "track", val = 2, def = 1.0 , min = 0, max = 2, step = 0.01},
-				{ id = "keybind_sensitivity_factor", type = "track", val = 2, def = 5.0 , min = 0, max = 10, step = 0.1},
-				{ id = "use_lean_for_liz_inertia_factor", type = "check", val = 1, def = true },
+
 				{ id = "dynamically_switch_sides", type = "check", val = 1, def = true },
 				{ id = "lean_from_nothing", type = "check", val = 1, def = true },
-				
-				{ id = "lean_adjustment_keybind", type = "slide", text = "dlac_adjustment_keybind_title", size = {512,50}, spacing = 20 },
-				{ id = "adjustment_keybind", type = "key_bind", val = 2, def = DIK_keys.DIK_LMENU, },
-				
+				{ id = "use_lean_for_liz_inertia_factor", type = "check", val = 1, def = true },
+
+				{ id = "lean_sensitivity_header", type = "slide", text = "dlac_sensitivity_title", size = {512,50}, spacing = 20 },
+				{ id = "mouse_sensitivity_factor", type = "track", val = 2, def = 1.0 , min = 0, max = 2, step = 0.01},
+				{ id = "keybind_sensitivity_factor", type = "track", val = 2, def = 5.0 , min = 0, max = 10, step = 0.1},
+
 				{ id = "lean_adjustment_keybind_up_down", type = "slide", text = "dlac_adjustment_keybind_up_down_title", size = {512,50}, spacing = 20 },
 				{ id = "adjustment_keybind_left", type = "key_bind", val = 2, def = DIK_keys.DIK_A, },
 				{ id = "adjustment_keybind_right", type = "key_bind", val = 2, def = DIK_keys.DIK_D, },
@@ -42,16 +45,17 @@ function on_mcm_load()
 		{ id = "crouch_dlac", text = "dlac_crouch_title", sh = true, gr =
 			{
 				{ id = "crouch_title", type = "slide", link = "AMCM_Banner.dds", text = "dlac_crouch_title", size = {512,50}, spacing = 20 },
+
 				{ id = "adjustment_mode", type = "list", val = 0, def = "mouse_move", content = {{"mouse_move", "mouse_move"}, {"keybind", "keybind"}} },
+
+				{ id = "dynamically_switch_stances", type = "check", val = 1, def = true },
+				{ id = "stance_commit_factor", type = "track", val = 2, def = 1.0 , min = 0, max = 2, step = 0.01},
+				{ id = "crouch_from_nothing", type = "check", val = 1, def = true },
+
+				{ id = "crouch_sensitivity_header", type = "slide", text = "dlac_sensitivity_title", size = {512,50}, spacing = 20 },
 				{ id = "mouse_sensitivity_factor", type = "track", val = 2, def = 1.0 , min = 0, max = 2, step = 0.01},
 				{ id = "keybind_sensitivity_factor", type = "track", val = 2, def = 5.0 , min = 0, max = 10, step = 0.1},
-				{ id = "dynamically_switch_stances", type = "check", val = 1, def = true },
-				{ id = "crouch_from_nothing", type = "check", val = 1, def = true },
-				{ id = "stance_commit_factor", type = "track", val = 2, def = 1.0 , min = 0, max = 2, step = 0.01},
-				
-				{ id = "crouch_adjustment_keybind", type = "slide", text = "dlac_adjustment_keybind_title", size = {512,50}, spacing = 20 },
-				{ id = "adjustment_keybind", type = "key_bind", val = 2, def = DIK_keys.DIK_LMENU, },
-				
+
 				{ id = "crouch_adjustment_keybind_up_down", type = "slide", text = "dlac_adjustment_keybind_up_down_title", size = {512,50}, spacing = 20 },
 				{ id = "adjustment_keybind_up", type = "key_bind", val = 2, def = DIK_keys.DIK_W, },
 				{ id = "adjustment_keybind_down", type = "key_bind", val = 2, def = DIK_keys.DIK_S, },

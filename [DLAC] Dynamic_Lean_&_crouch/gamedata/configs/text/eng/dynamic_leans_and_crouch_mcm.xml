@@ -2,7 +2,7 @@
 
 <string_table>
     <string id="ui_mcm_menu_dynamic_leans_and_crouch">
-        <text>Dynamic Leans and Crouch</text>
+        <text>Dynamic Lean and Crouch</text>
     </string>
 	<string id="dlac_lean_title">
         <text>Leaning</text>
@@ -20,11 +20,18 @@
         <text>Nudges the angle/height up and down. Only does anything in keybind mode.</text>
     </string>
 	
+	<string id="dlac_behavior_title">
+        <text>Behavior</text>
+    </string>
+	<string id="dlac_sensitivity_title">
+        <text>Sensitivity</text>
+    </string>
+	
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_adjustment_mode">
         <text>Adjustment Mode</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_adjustment_mode_desc">
-        <text>How you control the dynamic lean - mouse movement or dedicated keys. Pick whichever feels right.</text>
+        <text>How you control the dynamic lean. Either with mouse movement or dedicated keybinds.</text>
     </string>
 	<string id="dynamic_leans_and_crouch_lean_dlac_adjustment_mode_lst_mouse_move">
         <text>Mouse Movement</text>
@@ -36,13 +43,13 @@
         <text>Mouse Movement Sensitivity</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_mouse_sensitivity_factor_desc">
-        <text>How much moving the mouse actually leans you. Middle of the slider is the normal amount, lower if it's too twitchy, higher if you want it snappier.</text>
+        <text>How much moving the mouse actually leans you. Putting the slider back in the middel is the default value.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_keybind_sensitivity_factor">
         <text>Keybind Adjustment Sensitivity</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_keybind_sensitivity_factor_desc">
-        <text>Same idea but for keybind mode instead of the mouse. Middle of the slider matches the mouse's normal feel.</text>
+        <text>How much a keypress actually leans you. Putting the slider back in the middel is the default value.</text>
     </string>
 	
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_use_lean_for_liz_inertia_factor">
@@ -52,12 +59,6 @@
         <text>Scales the Liz Inertia lean animation with how far you're actually leaning instead of always full strength.</text>
     </string>
 	
-	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_adjustment_keybind">
-        <text>Lean Adjustment Keybind</text>
-    </string>
-	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_adjustment_keybind_desc">
-        <text>Hold this + move the mouse to adjust your lean. Without it held, nothing happens.</text>
-    </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_adjustment_keybind_left">
         <text>Left Adjustment Keybind</text>
     </string>
@@ -74,20 +75,20 @@
         <text>Dynamically Switch Sides</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_dynamically_switch_sides_desc">
-        <text>Push a lean all the way and keep going - instead of just stopping, it carries you over into leaning the other way.</text>
+        <text>Lets you dynamicly switch sides when leaning instead of stopping in the middle. Now you can easily move your lean from left to right or from right to left. You could even go left, right, left and right again.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_lean_from_nothing">
         <text>Lean From Nothing</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_lean_dlac_lean_from_nothing_desc">
-        <text>Start a lean straight from the mouse, no need to tap a lean key first. Direction follows wherever you move the mouse.</text>
+        <text>Makes the normal lean key obsolete. Now you can just use the adjustment key and start leaning from nothing.</text>
     </string>
 	
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_mode">
         <text>Adjustment Mode</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_mode_desc">
-        <text>Same as the lean one - mouse or keybind, whatever you prefer for crouch height.</text>
+        <text>How you control the dynamic lean. Either with mouse movement or dedicated keybinds.</text>
     </string>
 	<string id="dynamic_leans_and_crouch_crouch_dlac_adjustment_mode_lst_mouse_move">
         <text>Mouse Movement</text>
@@ -99,49 +100,43 @@
         <text>Mouse Movement Sensitivity</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_mouse_sensitivity_factor_desc">
-        <text>How much moving the mouse changes your crouch height. Default is the middle of the slider - go lower for finer control, higher if it feels sluggish.</text>
+        <text>How much moving the mouse actually changes the height. Putting the slider back in the middel is the default value.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_keybind_sensitivity_factor">
         <text>Keybind Adjustment Sensitivity</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_keybind_sensitivity_factor_desc">
-        <text>Same idea but for keybind mode instead of the mouse. Middle of the slider matches the mouse's normal feel.</text>
-    </string>
-	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_keybind">
-        <text>Crouch Adjustment Keybind</text>
-    </string>
-	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_keybind_desc">
-        <text>Hold this + move the mouse to adjust crouch height. Nothing happens without it held.</text>
+        <text>How much a keypress actually changes height. Putting the slider back in the middel is the default value.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_keybind_up">
         <text>Up Adjustment Keybind</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_keybind_up_desc">
-        <text>Hold with the adjustment key to rise up.</text>
+        <text>Hold with the adjustment key to go up.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_keybind_down">
         <text>Down Adjustment Keybind</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_adjustment_keybind_down_desc">
-        <text>Hold with the adjustment key to sink lower.</text>
+        <text>Hold with the adjustment key to go down.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_dynamically_switch_stances">
         <text>Dynamically Switch Stances</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_dynamically_switch_stances_desc">
-        <text>Crouch all the way down and keep pushing and you'll flow into prone instead of hitting a wall. Same going back up into standing.</text>
+        <text>Dynamicly switches stances when reaching certain height. Meaning it automaticly makes you crouche, stands you up or lets you go prone.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_crouch_from_nothing">
         <text>Crouch From Nothing</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_crouch_from_nothing_desc">
-        <text>Lets you crouch just by using the mouse, without pressing the crouch key first.</text>
+        <text>Makes the normal crouch key obsolete. Now you can just use the adjustment key and start crouching from nothing.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_stance_commit_factor">
         <text>Stance Commit Firmness</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_crouch_dlac_stance_commit_factor_desc">
-        <text>How firm a push is needed at the top or bottom of your crouch range before it actually commits to standing or prone. Going prone is deliberately harder to trigger than standing back up. This slider scales both together, keeping that balance.</text>
+        <text>Created so you dont easily get pulled out or in stances. There is now "weight" needed to pull you out or in a stance. Going prone is deliberately harder to trigger than standing back up. This slider scales both together, keeping that balance.</text>
     </string>
 
     <string id="dlac_general_title">
@@ -151,18 +146,24 @@
         <text>Enable Mod</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_general_dlac_mod_enabled_desc">
-        <text>Master on/off switch. Turning it off stands you up straight and drops any lean first, so it's the safe way to disable it - do this before removing the mod too, otherwise you could get stuck mid-crouch with nothing left to fix it.</text>
+        <text>Master on/off switch. Turning it off stands you up straight and drops any lean first, so it's the safe way to disable the mod. Do this before removing the mod, otherwise you could get stuck mid-crouch.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_general_dlac_sprint_removes_stance_and_lean">
         <text>Sprinting Removes Stance And Lean</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_general_dlac_sprint_removes_stance_and_lean_desc">
-        <text>Trying to sprint out of a lean or crouch/prone will actually stand you up first instead of just refusing to run.</text>
+        <text>When trying to sprint you are no longer held back by a lean or by a crouch. Your character will automaticly stand up straight and break the lean so you can easily sprint out of stressfull situations.</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_general_dlac_default_reset_timer">
-        <text>Return-To-Normal Speed</text>
+        <text>Reset To Default Position</text>
     </string>
 	<string id="ui_mcm_dynamic_leans_and_crouch_general_dlac_default_reset_timer_desc">
-        <text>How smoothly the regular crouch/lean keys settle back to normal after you use them. Turn it all the way down if you'd rather it just snap instantly like before.</text>
+        <text>How long it takes for the normal crouch/lean keys to get back their default angle or height after you use them. To turn this off set the slider to zero.</text>
+    </string>
+	<string id="ui_mcm_dynamic_leans_and_crouch_general_dlac_adjustment_keybind">
+        <text>Dynamic Adjustment Key</text>
+    </string>
+	<string id="ui_mcm_dynamic_leans_and_crouch_general_dlac_adjustment_keybind_desc">
+        <text>This key needs to be held down together with the mouse or keybind to start leaning or crouching. Default is LEFT-ALT.</text>
     </string>
 </string_table>
