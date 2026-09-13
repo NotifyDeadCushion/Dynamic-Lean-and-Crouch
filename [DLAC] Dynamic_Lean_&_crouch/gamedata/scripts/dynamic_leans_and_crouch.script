@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Dynamic Lean and Crouch
--- Version: V1.2
+-- Version: V1.202
 -- Author: Verdatim, Boeker
 --
 -- Dynamic lean angle and crouch/prone height control for STALKER Anomaly /
@@ -12,6 +12,14 @@
 -- runtime. Functions are forward-declared here, then implemented further
 -- down in alphabetical order.
 -- ============================================================================
+
+-- Fix note: lean keys were resolved once at script-load time, before the
+-- player's actual keybind config was necessarily loaded, so lean could end
+-- up bound to the wrong key and simply never engage. Crouch didn't show the
+-- same symptom because its height change applies directly regardless of any
+-- key state, while lean only becomes visible if the correct key is actually
+-- pressed. Keys are now resolved later, via actor_on_first_update, once the
+-- player's real bindings are available.
 
 lean_value_l = 1
 lean_value_r = 1
@@ -43,13 +51,9 @@ control_modes = { keybind = 1, mouse_move = 0 }
 -- ----------------------------------------------------------------------------
 -- KEYS -- engine actions resolved once, independent of the player's binds
 -- ----------------------------------------------------------------------------
-local KEYS = {
-	accel      = bind_to_dik(key_bindings.kACCEL), -- walk toggle; crouch + accel = prone
-	crouch     = bind_to_dik(key_bindings.kCROUCH),
-	lean_left  = bind_to_dik(key_bindings.kL_LOOKOUT),
-	lean_right = bind_to_dik(key_bindings.kR_LOOKOUT),
-	sprint     = bind_to_dik(key_bindings.kSPRINT_TOGGLE),
-}
+-- Resolved on actor_on_first_update rather than here at script-load time,
+-- since the player's real keybinds may not be loaded yet at this point.
+local KEYS = {}
 
 -- ----------------------------------------------------------------------------
 -- STATE -- everything that changes at runtime, alphabetical
@@ -93,9 +97,9 @@ local STATE = {
 local apply_crouch_delta, apply_lean_delta, begin_crouch_reset, begin_lean_reset,
       compute_axis_weights, dispatch_lean_input, full_reset, get_lean_magnitude,
       handle_crouch_key_press, handle_lean_key_press, handle_sprint_key_press,
-      lean_key_for, set_crouch_engaged, set_crouch_value, set_lean_engaged,
-      set_lean_magnitude, set_lean_value, step_toward, try_enter_crouch,
-      try_enter_prone, try_exit_prone, try_exit_to_standing
+      lean_key_for, refresh_keys, set_crouch_engaged, set_crouch_value,
+      set_lean_engaged, set_lean_magnitude, set_lean_value, step_toward,
+      try_enter_crouch, try_enter_prone, try_exit_prone, try_exit_to_standing
 
 -- ============================================================================
 -- Implementations, alphabetical
@@ -338,6 +342,17 @@ lean_key_for = function(side)
 	return side == "l" and KEYS.lean_left or KEYS.lean_right
 end
 
+-- Populates KEYS from the player's actual keybinds. Called from
+-- on_option_change rather than at script-load time, since bind_to_dik may
+-- not have the player's real bindings loaded yet this early.
+refresh_keys = function()
+	KEYS.accel = bind_to_dik(key_bindings.kACCEL) -- walk toggle; crouch + accel = prone
+	KEYS.crouch = bind_to_dik(key_bindings.kCROUCH)
+	KEYS.lean_left = bind_to_dik(key_bindings.kL_LOOKOUT)
+	KEYS.lean_right = bind_to_dik(key_bindings.kR_LOOKOUT)
+	KEYS.sprint = bind_to_dik(key_bindings.kSPRINT_TOGGLE)
+end
+
 -- Toggles crouch on/off, respecting hold vs toggle crouch config.
 set_crouch_engaged = function(engaged)
 	if get_console_cmd(1, "g_crouch_toggle") then
@@ -535,6 +550,8 @@ end
 -- Reads every MCM value into STATE. Runs at game start and on every option
 -- change. Fields are read in alphabetical order to match STATE's layout.
 function on_option_change()
+	refresh_keys()
+
 	local root = "dynamic_leans_and_crouch/"
 
 	STATE.adjustment_key = ui_mcm.get(root .. "general_dlac/adjustment_keybind") or DIK_keys.DIK_LMENU
