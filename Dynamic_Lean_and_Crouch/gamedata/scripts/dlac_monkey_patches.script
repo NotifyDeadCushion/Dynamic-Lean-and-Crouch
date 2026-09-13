@@ -1,5 +1,6 @@
 local lean_tree_name = "lean_dlac"
-dlac = dynamic_leans_and_crouch
+-- dlac already exists as a global automatically -- it's the table this
+-- file's own name (dlac.script) produces, same mechanism as lie below.
 lie = liz_inertia_expanded
 
 use_lean_for_liz_inertia_factor = true
@@ -41,7 +42,7 @@ function on_game_start()
 end
 
 function on_option_change()
-	use_lean_for_liz_inertia_factor = ui_mcm.get("dynamic_leans_and_crouch/" .. lean_tree_name .. "/use_lean_for_liz_inertia_factor")
-	control_mode_lean = ui_mcm.get("dynamic_leans_and_crouch/" .. lean_tree_name .. "/adjustment_mode")
+	use_lean_for_liz_inertia_factor = ui_mcm.get("dlac/" .. lean_tree_name .. "/use_lean_for_liz_inertia_factor")
+	control_mode_lean = ui_mcm.get("dlac/" .. lean_tree_name .. "/adjustment_mode")
 	control_mode_lean = dlac.control_modes[control_mode_lean] or 0
 end

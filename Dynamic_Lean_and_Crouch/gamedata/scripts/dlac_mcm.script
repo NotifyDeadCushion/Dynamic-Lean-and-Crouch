@@ -1,6 +1,6 @@
 function on_mcm_load()
   op = { 
-    id = "dynamic_leans_and_crouch", gr =
+    id = "dlac", gr =
       {  -- options tree goes here
 		{ id = "general_dlac", text = "dlac_general_title", sh = true, gr =
 			{
@@ -16,6 +16,8 @@ function on_mcm_load()
 		{ id = "lean_dlac", text = "dlac_lean_title", sh = true, gr =
 			{
 				{ id = "lean_title", type = "slide", link = "AMCM_Banner.dds", text = "dlac_lean_title", size = {512,50}, spacing = 20 },
+				{ id = "lean_enabled", type = "check", val = 1, def = true },
+				{ id = "divider", type = "line" },
 
 				{ id = "adjustment_mode", type = "list", val = 0, def = "mouse_move", content = {{"mouse_move", "mouse_move"}, {"keybind", "keybind"}} },
 
@@ -35,6 +37,8 @@ function on_mcm_load()
 		{ id = "crouch_dlac", text = "dlac_crouch_title", sh = true, gr =
 			{
 				{ id = "crouch_title", type = "slide", link = "AMCM_Banner.dds", text = "dlac_crouch_title", size = {512,50}, spacing = 20 },
+				{ id = "crouch_enabled", type = "check", val = 1, def = true },
+				{ id = "divider", type = "line" },
 
 				{ id = "adjustment_mode", type = "list", val = 0, def = "mouse_move", content = {{"mouse_move", "mouse_move"}, {"keybind", "keybind"}} },
 

@@ -1,93 +1,73 @@
--- ============================================================================
 -- Dynamic Lean and Crouch
--- Version: V1.202
--- Author: Verdatim, Boeker
---
--- Dynamic lean angle and crouch/prone height control for STALKER Anomaly /
--- G.A.M.M.A., driven by mouse movement or dedicated keybinds. Supports
--- flowing automatically between lean sides, and between standing, crouch,
--- and prone, when pushed past their limits.
---
--- CONFIG holds every tunable number. STATE holds everything that changes at
--- runtime. Functions are forward-declared here, then implemented further
--- down in alphabetical order.
--- ============================================================================
+-- Version: V1.210
+-- Author: Boeker
 
--- Fix note: lean keys were resolved once at script-load time, before the
--- player's actual keybind config was necessarily loaded, so lean could end
--- up bound to the wrong key and simply never engage. Crouch didn't show the
--- same symptom because its height change applies directly regardless of any
--- key state, while lean only becomes visible if the correct key is actually
--- pressed. Keys are now resolved later, via actor_on_first_update, once the
--- player's real bindings are available.
-
-lean_value_l = 1
-lean_value_r = 1
+lean_value_l = 1 	-- global: dlac_monkey_patches.script reads these directly
+lean_value_r = 1	-- global: dlac_monkey_patches.script reads these directly
 
 -- ----------------------------------------------------------------------------
--- CONFIG -- every tunable value, alphabetical
+-- CONFIG
 -- ----------------------------------------------------------------------------
 local CONFIG = {
-	CROUCH_FROM_NOTHING_DEADBAND = 0.005,  -- minimum push needed to start crouching from standing (mouse only)
-	CROUCH_KEYBIND_BASE          = 0.005,  -- crouch offset change per keybind tick, at sensitivity factor 5 (middle)
-	CROUCH_MOUSE_MOVE_BASE       = 0.00025, -- crouch offset change per pixel, at sensitivity factor 1
-	LEAN_FROM_NOTHING_DEADBAND   = 3,      -- minimum mouse pixels needed to start a lean from neutral (mouse only)
-	LEAN_KEYBIND_BASE            = 0.05,   -- lean coefficient change per keybind tick, at sensitivity factor 5 (middle)
-	LEAN_MOUSE_MOVE_BASE         = 0.0025, -- lean coefficient change per pixel, at sensitivity factor 1
-	MAX_CROUCH                   = 0.25,   -- crouch offset at the standing/crouch boundary
-	MAX_LEAN                     = 2,      -- maximum lean coefficient
-	MIN_CROUCH                   = -0.35,  -- crouch offset at the crouch/prone boundary
-	MIN_LEAN                     = 0,      -- minimum lean coefficient (fully upright)
-	STANCE_LOCK_MS               = 350,    -- lockout after any stance change, lets the animation play
-	STANCE_TRANSITION_OVERSHOOT_BASE = 0.02, -- prone commit threshold at factor 1; standing is half of this
-	STANCE_TRANSITION_STANDING_RATIO = 0.5,  -- standing's threshold = base * this ratio
+	CROUCH_FROM_NOTHING_DEADBAND = 0.005,   		-- min push needed to start crouching from standing (mouse only)
+	CROUCH_KEYBIND_BASE          = 0.005,   		-- crouch offset per keybind tick, at sensitivity factor 5 (middle)
+	CROUCH_MOUSE_MOVE_BASE       = 0.00025, 		-- crouch offset per pixel, at sensitivity factor 1
+	LEAN_FROM_NOTHING_DEADBAND   = 3,       		-- min mouse pixels needed to start a lean from neutral
+	LEAN_KEYBIND_BASE            = 0.05,    		-- lean coefficient per keybind tick, at sensitivity factor 5 (middle)
+	LEAN_MOUSE_MOVE_BASE         = 0.0025,  		-- lean coefficient per pixel, at sensitivity factor 1
+	MAX_CROUCH                   = 0.25,    		-- crouch offset at the standing/crouch boundary
+	MAX_LEAN                     = 2,       		-- maximum lean coefficient
+	MIN_CROUCH                   = -0.35,   		-- crouch offset at the crouch/prone boundary
+	MIN_LEAN                     = 0,       		-- minimum lean coefficient (fully upright)
+	STANCE_LOCK_MS               = 350,     		-- lockout after any stance change, lets the animation finish
+	STANCE_TRANSITION_OVERSHOOT_BASE = 0.02, 		-- prone commit threshold at factor 1; standing is half of this
+	STANCE_TRANSITION_STANDING_RATIO = 0.5,  		-- standing's threshold = base * this ratio
 }
 
--- Adjustment-mode ids, shared by lean and crouch. Kept as a GLOBAL (not
--- local) because dynamic_leans_and_crouch_monkey_patches.script reads it
--- directly as dlac.control_modes for its own independent mode tracking.
-control_modes = { keybind = 1, mouse_move = 0 }
+control_modes = { keybind = 1, mouse_move = 0 } 	-- global: dlac_monkey_patches.script reads this
 
 -- ----------------------------------------------------------------------------
--- KEYS -- engine actions resolved once, independent of the player's binds
+-- KEYS
 -- ----------------------------------------------------------------------------
--- Resolved on actor_on_first_update rather than here at script-load time,
--- since the player's real keybinds may not be loaded yet at this point.
+-- Resolved on actor_on_first_update, not here -- the player's real
+-- keybinds may not be loaded yet at script-load time.
 local KEYS = {}
 
 -- ----------------------------------------------------------------------------
--- STATE -- everything that changes at runtime, alphabetical
+-- STATE -- alphabetical
 -- ----------------------------------------------------------------------------
 local STATE = {
-	adjustment_key                 = DIK_keys.DIK_LMENU, -- MCM (General): held to enable dynamic lean/crouch control
-	crouch_from_nothing            = true,
-	crouch_keybind_down            = DIK_keys.DIK_S,     -- keybind-mode nudge key, crouch lower
-	crouch_keybind_step            = CONFIG.CROUCH_KEYBIND_BASE, -- scaled by keybind sensitivity factor
-	crouch_keybind_up              = DIK_keys.DIK_W,     -- keybind-mode nudge key, crouch higher
-	crouch_offset                  = 0,     -- current crouch depth, CONFIG.MIN_CROUCH..CONFIG.MAX_CROUCH
-	crouch_target                  = nil,   -- animation target for the normal crouch button's reset
-	default_reset_timer            = 0,     -- seconds; 0 = resetting disabled, last angle/depth is remembered
-	dynamically_switch_sides       = true,
-	dynamically_switch_stances     = true,
-	lean_from_nothing              = true,
-	lean_keybind_left              = DIK_keys.DIK_A, -- keybind-mode nudge key, lean further left
-	lean_keybind_right             = DIK_keys.DIK_D, -- keybind-mode nudge key, lean further right
-	lean_keybind_step              = CONFIG.LEAN_KEYBIND_BASE, -- scaled by keybind sensitivity factor
-	lean_side                      = nil,   -- nil | "l" | "r"
-	lean_target_l                  = nil,   -- animation target for the normal lean button's reset (left)
-	lean_target_r                  = nil,   -- animation target for the normal lean button's reset (right)
-	mod_enabled                    = true,
-	mode_crouch                    = control_modes.mouse_move,
-	mode_lean                      = control_modes.mouse_move,
-	mouse_coef_crouch              = CONFIG.CROUCH_MOUSE_MOVE_BASE,
-	mouse_coef_lean                = CONFIG.LEAN_MOUSE_MOVE_BASE,
-	sprint_removes_stance_and_lean = true,
-	stance                         = "standing", -- "standing" | "crouching" | "prone"
-	stance_lock_until              = 0,
-	stance_overshoot               = 0,
-	stance_transition_overshoot_prone    = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE, -- scaled by MCM factor
-	stance_transition_overshoot_standing = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE
-		* CONFIG.STANCE_TRANSITION_STANDING_RATIO, -- scaled by the same MCM factor
+	adjustment_key                 = DIK_keys.DIK_LMENU, 			-- held to enable dynamic lean/crouch control
+	crouch_enabled                 = true,  						-- master on/off for dynamic crouch control
+	crouch_from_nothing            = true,  						-- lets crouch start from standing via mouse alone
+	crouch_keybind_down            = DIK_keys.DIK_S, 				-- keybind-mode nudge key, crouch lower
+	crouch_keybind_step            = CONFIG.CROUCH_KEYBIND_BASE, 	-- crouch offset per keybind tick, scaled by sensitivity
+	crouch_keybind_up              = DIK_keys.DIK_W, 				-- keybind-mode nudge key, crouch higher
+	crouch_offset                  = 0,    							-- current crouch depth, CONFIG.MIN_CROUCH..CONFIG.MAX_CROUCH
+	crouch_target                  = nil,   						-- pending animation target for the normal crouch key's reset
+	default_reset_timer            = 0,     						-- 0 = remember last depth/angle instead of resetting
+	dynamically_switch_sides       = true,  						-- lets a lean flip to the other side past the limit
+	dynamically_switch_stances     = true,  						-- lets crouch flow into prone/standing past the limit
+	lean_enabled                   = true,  						-- master on/off for dynamic lean control
+	lean_from_nothing              = true,  						-- lets a lean start from neutral via mouse alone
+	lean_keybind_left              = DIK_keys.DIK_A, 				-- keybind-mode nudge key, lean further left
+	lean_keybind_right             = DIK_keys.DIK_D, 				-- keybind-mode nudge key, lean further right
+	lean_keybind_step              = CONFIG.LEAN_KEYBIND_BASE, 		-- lean coefficient per keybind tick, scaled by sensitivity
+	lean_side                      = nil,   						-- nil | "l" | "r"
+	lean_target_l                  = nil,   						-- pending animation target for the normal lean key's reset (left)
+	lean_target_r                  = nil,   						-- pending animation target for the normal lean key's reset (right)
+	mod_enabled                    = true,  						-- master on/off for the whole mod
+	mode_crouch                    = control_modes.mouse_move, 		-- current crouch adjustment mode
+	mode_lean                      = control_modes.mouse_move, 		-- current lean adjustment mode
+	mouse_coef_crouch              = CONFIG.CROUCH_MOUSE_MOVE_BASE, -- crouch offset per pixel, scaled by sensitivity
+	mouse_coef_lean                = CONFIG.LEAN_MOUSE_MOVE_BASE, 	-- lean coefficient per pixel, scaled by sensitivity
+	sprint_removes_stance_and_lean = true,  						-- sprinting stands you up and drops any lean
+	stance                         = "standing", 					-- "standing" | "crouching" | "prone"
+	stance_lock_until              = 0,     						-- timestamp; no crouch adjustment until this passes
+	stance_overshoot               = 0,     						-- accumulated push past a boundary, toward committing to a new stance
+
+	stance_transition_overshoot_prone    = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE, 											-- push needed to commit to prone
+	stance_transition_overshoot_standing = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE * CONFIG.STANCE_TRANSITION_STANDING_RATIO, 	-- push needed to commit to standing
 }
 
 -- ----------------------------------------------------------------------------
@@ -97,19 +77,17 @@ local STATE = {
 local apply_crouch_delta, apply_lean_delta, begin_crouch_reset, begin_lean_reset,
       compute_axis_weights, dispatch_lean_input, full_reset, get_lean_magnitude,
       handle_crouch_key_press, handle_lean_key_press, handle_sprint_key_press,
-      lean_key_for, refresh_keys, release_lean_to_neutral, set_crouch_engaged,
-      set_crouch_value, set_lean_engaged, set_lean_magnitude, set_lean_value,
-      step_toward, try_enter_crouch, try_enter_prone, try_exit_prone, try_exit_to_standing
+      lean_key_for, refresh_keys, release_lean_to_neutral, reset_crouch_to_neutral,
+      set_crouch_engaged, set_crouch_value, set_lean_engaged, set_lean_magnitude,
+      set_lean_value, step_toward, try_enter_crouch, try_enter_prone, try_exit_prone,
+      try_exit_to_standing
 
--- ============================================================================
+-- ----------------------------------------------------------------------------
 -- Implementations, alphabetical
--- ============================================================================
+-- ----------------------------------------------------------------------------
 
--- Central crouch/prone/standing adjustment. Called by every input mode with
--- a single already-scaled delta (positive = up, negative = down).
--- bypass_deadband skips the From Nothing deadband -- used by keybind mode,
--- where a nudge-key press is already deliberate intent, unlike mouse
--- movement which needs the deadband to filter accidental jitter.
+-- bypass_deadband: keybind/scroll nudges are already deliberate, unlike
+-- mouse jitter, so they skip the From Nothing deadband.
 apply_crouch_delta = function(delta, bypass_deadband)
 	if time_global() < STATE.stance_lock_until then return end
 
@@ -130,10 +108,7 @@ apply_crouch_delta = function(delta, bypass_deadband)
 		return
 	end
 
-	-- STATE.stance == "crouching" -- in-range depth adjustment always works;
-	-- only crossing a boundary into a new stance needs the toggle. Without
-	-- it, hitting a boundary just clamps and holds -- getting out requires
-	-- pressing the real crouch key.
+	-- crouching: in-range adjustment always works, boundaries need the toggle
 	local raw_value = STATE.crouch_offset + delta
 
 	if raw_value >= CONFIG.MAX_CROUCH then
@@ -161,13 +136,14 @@ apply_crouch_delta = function(delta, bypass_deadband)
 	set_crouch_value(raw_value)
 end
 
--- Central lean adjustment. "side" is which side this delta applies to;
--- "starting_fresh" engages the engine action for a brand new lean.
+-- Adjusts one side's lean magnitude. starting_fresh engages the engine
+-- action for a brand new lean; otherwise just applies delta to the side
+-- already active.
 apply_lean_delta = function(side, delta, starting_fresh)
 	if starting_fresh then
 		set_lean_engaged(lean_key_for(side), true)
 		STATE.lean_side = side
-		set_lean_magnitude(side, 0) -- a fresh lean always starts from zero, not a stale leftover value
+		set_lean_magnitude(side, 0)
 	end
 
 	local new_value = get_lean_magnitude(side) + delta
@@ -186,24 +162,20 @@ apply_lean_delta = function(side, delta, starting_fresh)
 		return
 	end
 
-	-- Without side-switching, reaching zero just clamps and stays engaged --
-	-- getting out requires pressing the real lean key, same as crouch above.
 	new_value = clamp(new_value, CONFIG.MIN_LEAN, CONFIG.MAX_LEAN)
 	set_lean_magnitude(side, new_value)
 	set_lean_value(new_value)
 end
 
--- Queues the normal crouch button's reset to 0. If the reset timer is 0,
--- resetting is disabled entirely -- your last crouch depth is remembered
--- instead of being forced back to the default.
+-- Queues the normal crouch key's reset to the default depth, if resetting
+-- is enabled in MCM.
 begin_crouch_reset = function()
 	if STATE.default_reset_timer <= 0 then return end
 	STATE.crouch_target = 0
 end
 
--- Queues (or instantly applies) the normal lean button's reset to a target.
--- Always used for a side-switch carryover; the caller decides whether to
--- call this at all for a fresh engage (see handle_lean_key_press).
+-- Side-switch carryover always calls this; a fresh engage only calls it
+-- when resetting is enabled (see handle_lean_key_press).
 begin_lean_reset = function(side, target)
 	if STATE.default_reset_timer > 0 then
 		if side == "l" then STATE.lean_target_l = target else STATE.lean_target_r = target end
@@ -213,9 +185,8 @@ begin_lean_reset = function(side, target)
 	end
 end
 
--- Reduces cross-axis leakage from imperfect straight-line mouse movement.
--- Pure horizontal or vertical movement gets full weight on its own axis and
--- none on the other; a true diagonal gets full weight on both.
+-- Splits mouse movement into lean vs crouch weight, so a diagonal drag can
+-- adjust both, but drift off either axis doesn't leak into the other.
 compute_axis_weights = function(dx, dy)
 	local ax, ay = math.abs(dx), math.abs(dy)
 	local total = ax + ay
@@ -227,12 +198,8 @@ compute_axis_weights = function(dx, dy)
 	return lean_weight, stance_weight
 end
 
--- Shared by every input mode (mouse, keybind): given "which direction this
--- input clearly favors" and its magnitude this tick, applies it through the
--- same lean system regardless of what produced it. If a lean is already
--- active, moving toward the active side increases it and moving away
--- decreases it (enabling the dynamic side-flip); if nothing is active,
--- Lean From Nothing decides whether this starts a fresh lean.
+-- Routes lean input from any mode (mouse or keybind) through the same
+-- engage/adjust/switch logic, so both feel identical.
 dispatch_lean_input = function(desired_side, magnitude)
 	if STATE.lean_side == "l" then
 		apply_lean_delta("l", (desired_side == "l") and magnitude or -magnitude)
@@ -243,34 +210,17 @@ dispatch_lean_input = function(desired_side, magnitude)
 	end
 end
 
--- Full clean shutdown: releases any active lean, drops out of crouch/prone,
--- restores default values. Runs when the mod is disabled via MCM, so
--- turning it off before removing the mod's files won't leave the character
--- stuck leaning or crouched with nothing able to reset it.
+-- Returns lean and crouch to neutral. Runs when the mod itself is disabled.
 full_reset = function()
 	release_lean_to_neutral()
-
-	if STATE.stance == "prone" then
-		level.press_action(KEYS.accel) -- back to plain crouch before standing up
-	end
-
-	if STATE.stance ~= "standing" then
-		STATE.crouch_offset = 0
-		set_crouch_value(0) -- normalize before standing, so it isn't a snap from mid-crouch/prone
-		set_crouch_engaged(false)
-	end
-
-	STATE.stance = "standing"
-	STATE.stance_overshoot = 0
-	STATE.crouch_target = nil
+	reset_crouch_to_neutral()
 end
 
 get_lean_magnitude = function(side)
 	if side == "l" then return lean_value_l else return lean_value_r end
 end
 
--- Real crouch key press (not the dynamic control). Always fully toggles
--- between standing and crouching, and always drops any scripted prone.
+-- Real crouch key: toggles between standing and crouching.
 handle_crouch_key_press = function()
 	if STATE.stance == "standing" then
 		STATE.stance = "crouching"
@@ -282,10 +232,8 @@ handle_crouch_key_press = function()
 	end
 end
 
--- Real lean key press (not the dynamic control). Toggles the given side on
--- or off; switching from the opposite side carries its magnitude over
--- instead of resetting to the default, since you never actually stopped
--- leaning, you just changed which key the engine considers active.
+-- Real lean key: toggles the given side on/off. Switching from the other
+-- side carries its magnitude over instead of resetting.
 handle_lean_key_press = function(side)
 	local was_active = (STATE.lean_side == side)
 	local was_neutral = (STATE.lean_side == nil)
@@ -299,23 +247,16 @@ handle_lean_key_press = function(side)
 	STATE.lean_side = side
 
 	if not was_neutral then
-		-- switching from the other side: always carry its magnitude over
 		local target = get_lean_magnitude(previous_side)
 		set_lean_magnitude(side, target)
 		begin_lean_reset(side, target)
 	elseif STATE.default_reset_timer > 0 then
-		-- fresh engage with resetting enabled: ease to the default of 1
 		begin_lean_reset(side, 1)
 	end
-	-- fresh engage with resetting disabled: leave this side's magnitude
-	-- exactly as it already was -- remembered, not forced to a default
 end
 
--- Vanilla Anomaly blocks sprint while leaning rather than cancelling the
--- lean for you, so it has to be released here explicitly or the character
--- stays genuinely leaning and sprint still won't engage. Crouch/prone, by
--- contrast, ARE already cancelled by vanilla sprint on their own -- only
--- sync tracking for those, don't press crouch_key/accel_key ourselves.
+-- Vanilla blocks sprint while leaning instead of cancelling it, so lean
+-- needs releasing here. Crouch/prone are already cancelled by vanilla.
 handle_sprint_key_press = function()
 	release_lean_to_neutral()
 
@@ -329,19 +270,16 @@ lean_key_for = function(side)
 	return side == "l" and KEYS.lean_left or KEYS.lean_right
 end
 
--- Populates KEYS from the player's actual keybinds. Called from
--- on_option_change rather than at script-load time, since bind_to_dik may
--- not have the player's real bindings loaded yet this early.
+-- Reads the player's actual crouch/lean/sprint/accel keybinds.
 refresh_keys = function()
-	KEYS.accel = bind_to_dik(key_bindings.kACCEL) -- walk toggle; crouch + accel = prone
+	KEYS.accel = bind_to_dik(key_bindings.kACCEL) -- crouch + accel = prone
 	KEYS.crouch = bind_to_dik(key_bindings.kCROUCH)
 	KEYS.lean_left = bind_to_dik(key_bindings.kL_LOOKOUT)
 	KEYS.lean_right = bind_to_dik(key_bindings.kR_LOOKOUT)
 	KEYS.sprint = bind_to_dik(key_bindings.kSPRINT_TOGGLE)
 end
 
--- Fully releases the current lean: engine action off, tracking cleared,
--- magnitude back to default, any pending reset animation cancelled.
+-- Disengages any active lean and resets magnitude to default.
 release_lean_to_neutral = function()
 	if STATE.lean_side then
 		set_lean_engaged(lean_key_for(STATE.lean_side), false)
@@ -352,7 +290,24 @@ release_lean_to_neutral = function()
 	STATE.lean_target_l, STATE.lean_target_r = nil, nil
 end
 
--- Toggles crouch on/off, respecting hold vs toggle crouch config.
+-- Returns to standing from crouch or prone, and resets the depth offset.
+reset_crouch_to_neutral = function()
+	if STATE.stance == "prone" then
+		level.press_action(KEYS.accel)
+	end
+
+	if STATE.stance ~= "standing" then
+		STATE.crouch_offset = 0
+		set_crouch_value(0)
+		set_crouch_engaged(false)
+	end
+
+	STATE.stance = "standing"
+	STATE.stance_overshoot = 0
+	STATE.crouch_target = nil
+end
+
+-- Engages or releases crouch, respecting hold vs toggle crouch config.
 set_crouch_engaged = function(engaged)
 	if get_console_cmd(1, "g_crouch_toggle") then
 		level.press_action(KEYS.crouch)
@@ -365,7 +320,7 @@ set_crouch_value = function(value)
 	db.actor:set_actor_box_y_offset(1, value)
 end
 
--- Toggles a lean side on/off, respecting hold vs toggle lean config.
+-- Engages or releases a lean side, respecting hold vs toggle lean config.
 set_lean_engaged = function(dik, engaged)
 	if get_console_cmd(1, "g_lookout_toggle") then
 		level.press_action(dik)
@@ -382,9 +337,8 @@ set_lean_value = function(value)
 	db.actor:set_actor_lookout_coef(value)
 end
 
--- Moves "current" toward "target" at a rate derived from "range" and
--- STATE.default_reset_timer. Returns the exact target value once within one
--- step's distance, so equality checks against the target are float-safe.
+-- Eases current toward target at a rate based on the reset timer. Returns
+-- target exactly once close enough, so equality checks stay float-safe.
 step_toward = function(current, target, dt, range)
 	if STATE.default_reset_timer <= 0 then return target end
 
@@ -395,9 +349,7 @@ step_toward = function(current, target, dt, range)
 	return current + (diff > 0 and move or -move)
 end
 
--- Standing -> crouching, from the dynamic control. Simple deadband rather
--- than overshoot, since this starts from a stopped baseline rather than an
--- already-moving boundary push.
+-- Standing to crouching.
 try_enter_crouch = function()
 	set_crouch_engaged(true)
 	STATE.stance = "crouching"
@@ -407,9 +359,8 @@ try_enter_crouch = function()
 	set_crouch_value(0)
 end
 
--- Crouching -> prone. Requires sustained push past the floor (not just
--- touching it) before it commits, so it doesn't fire from a single fast
--- swipe blowing through the whole crouch range.
+-- Requires sustained push, not just a touch, so a fast swipe can't blow
+-- through the whole crouch range in one tick.
 try_enter_prone = function(raw_value)
 	STATE.stance_overshoot = STATE.stance_overshoot + (CONFIG.MIN_CROUCH - raw_value)
 
@@ -419,7 +370,7 @@ try_enter_prone = function(raw_value)
 		return
 	end
 
-	level.press_action(KEYS.accel) -- crouch + walk toggle = prone
+	level.press_action(KEYS.accel)
 	STATE.stance = "prone"
 	STATE.stance_lock_until = time_global() + CONFIG.STANCE_LOCK_MS
 	STATE.stance_overshoot = 0
@@ -427,12 +378,12 @@ try_enter_prone = function(raw_value)
 	set_crouch_value(CONFIG.MIN_CROUCH)
 end
 
--- Prone -> crouching. Same overshoot requirement as entering prone.
+-- Prone to crouching. Same overshoot rule as entering prone.
 try_exit_prone = function(delta)
 	STATE.stance_overshoot = STATE.stance_overshoot + delta
 	if STATE.stance_overshoot < STATE.stance_transition_overshoot_prone then return end
 
-	level.press_action(KEYS.accel) -- drop walk toggle, back to plain crouch
+	level.press_action(KEYS.accel)
 	STATE.stance = "crouching"
 	STATE.stance_lock_until = time_global() + CONFIG.STANCE_LOCK_MS
 	STATE.stance_overshoot = 0
@@ -440,7 +391,7 @@ try_exit_prone = function(delta)
 	set_crouch_value(0)
 end
 
--- Crouching -> standing. Same overshoot requirement as entering prone.
+-- Crouching to standing. Same overshoot rule as entering prone.
 try_exit_to_standing = function(raw_value)
 	STATE.stance_overshoot = STATE.stance_overshoot + (raw_value - CONFIG.MAX_CROUCH)
 
@@ -454,18 +405,19 @@ try_exit_to_standing = function(raw_value)
 	STATE.stance = "standing"
 	STATE.stance_lock_until = time_global() + CONFIG.STANCE_LOCK_MS
 	STATE.stance_overshoot = 0
-	STATE.crouch_offset = CONFIG.MAX_CROUCH -- leave the offset at the calibrated standing height
+	STATE.crouch_offset = CONFIG.MAX_CROUCH
 end
 
--- ============================================================================
+-- ----------------------------------------------------------------------------
 -- Engine callbacks
--- ============================================================================
+-- ----------------------------------------------------------------------------
 
+-- Keybind-mode nudge input for lean and crouch.
 function on_before_key_hold(key, bind, dis, flags)
 	if not STATE.mod_enabled then return end
 	if STATE.mode_lean ~= control_modes.keybind and STATE.mode_crouch ~= control_modes.keybind then return end
 
-	if (key == STATE.lean_keybind_left or key == STATE.lean_keybind_right)
+	if STATE.lean_enabled and (key == STATE.lean_keybind_left or key == STATE.lean_keybind_right)
 		and key_state(STATE.adjustment_key) == 1 and STATE.mode_lean == control_modes.keybind then
 		local desired_side = (key_state(STATE.lean_keybind_left) == 1 and "l")
 			or (key_state(STATE.lean_keybind_right) == 1 and "r") or nil
@@ -475,9 +427,9 @@ function on_before_key_hold(key, bind, dis, flags)
 		flags.ret_value = false
 	end
 
-	if (key == STATE.crouch_keybind_up or key == STATE.crouch_keybind_down)
+	if STATE.crouch_enabled and (key == STATE.crouch_keybind_up or key == STATE.crouch_keybind_down)
 		and key_state(STATE.adjustment_key) == 1 and STATE.mode_crouch == control_modes.keybind then
-		flags.ret_value = false -- always suppress W/S's normal action while held, regardless of what fires below
+		flags.ret_value = false
 
 		if STATE.stance ~= "standing" or STATE.crouch_from_nothing then
 			local polarity = (key_state(STATE.crouch_keybind_up) == 1 and 1)
@@ -487,6 +439,7 @@ function on_before_key_hold(key, bind, dis, flags)
 	end
 end
 
+-- Mouse-driven lean and crouch adjustment while the adjustment key is held.
 function on_before_mouse_move(dx, dy, inputs_disabled, flags)
 	if not STATE.mod_enabled then return end
 	if STATE.mode_lean ~= control_modes.mouse_move and STATE.mode_crouch ~= control_modes.mouse_move then return end
@@ -496,8 +449,8 @@ function on_before_mouse_move(dx, dy, inputs_disabled, flags)
 	local x_strength, y_strength = math.abs(dx), math.abs(dy)
 	local lean_weight, stance_weight = compute_axis_weights(dx, dy)
 
-	if key_state(STATE.adjustment_key) == 1 and STATE.mode_lean == control_modes.mouse_move then
-		flags.ret_value = true -- suppress camera look while held, regardless of whether anything below fires
+	if STATE.lean_enabled and key_state(STATE.adjustment_key) == 1 and STATE.mode_lean == control_modes.mouse_move then
+		flags.ret_value = true
 
 		local magnitude = STATE.mouse_coef_lean * x_strength * lean_weight
 		local desired_side = (move_right and "r") or (move_left and "l") or nil
@@ -510,8 +463,8 @@ function on_before_mouse_move(dx, dy, inputs_disabled, flags)
 		end
 	end
 
-	if key_state(STATE.adjustment_key) == 1 and STATE.mode_crouch == control_modes.mouse_move then
-		flags.ret_value = true -- suppress camera look while held, regardless of whether anything below fires
+	if STATE.crouch_enabled and key_state(STATE.adjustment_key) == 1 and STATE.mode_crouch == control_modes.mouse_move then
+		flags.ret_value = true
 
 		if STATE.stance ~= "standing" or STATE.crouch_from_nothing then
 			local change = STATE.mouse_coef_crouch * y_strength * stance_weight
@@ -534,26 +487,27 @@ function on_game_start()
 	RegisterScriptCallback("actor_on_first_update", on_option_change)
 end
 
--- Real key presses always go through here regardless of adjustment mode --
--- mode only changes how you fine-tune an active lean/crouch, not whether
--- the normal keys work.
+-- Real key presses for crouch, sprint, and lean.
 function on_key_press(key)
 	if not STATE.mod_enabled then return end
 
-	if key == KEYS.crouch then handle_crouch_key_press() end
+	if STATE.crouch_enabled then
+		if key == KEYS.crouch then handle_crouch_key_press() end
+	end
 	if key == KEYS.sprint and STATE.sprint_removes_stance_and_lean then handle_sprint_key_press() end
 
-	if key == KEYS.lean_left then handle_lean_key_press("l")
-	elseif key == KEYS.lean_right then handle_lean_key_press("r") end
+	if STATE.lean_enabled then
+		if key == KEYS.lean_left then handle_lean_key_press("l")
+		elseif key == KEYS.lean_right then handle_lean_key_press("r") end
+	end
 end
 
--- Hold mode only (g_lookout_toggle off): keeps our own lean tracking in
--- sync with vanilla's own release handling. Releasing the real lean key
--- syncs tracking to what vanilla already stopped on its own; releasing the
--- adjustment key resets a mouse/keybind-driven lean, since there's no real
--- key for vanilla to have released in that case.
+-- Hold mode only. Real key release syncs tracking with what vanilla
+-- already stopped; adjustment-key release resets a mouse/keybind-driven
+-- lean, since no real key exists for vanilla to have released there.
 function on_key_release(key)
 	if not STATE.mod_enabled then return end
+	if not STATE.lean_enabled then return end
 	if get_console_cmd(1, "g_lookout_toggle") then return end
 
 	if key == STATE.adjustment_key then
@@ -568,14 +522,20 @@ function on_key_release(key)
 	end
 end
 
--- Reads every MCM value into STATE. Runs at game start and on every option
--- change. Fields are read in alphabetical order to match STATE's layout.
+-- Reads every MCM setting into STATE. Runs at game start and whenever any
+-- MCM option is applied.
 function on_option_change()
 	refresh_keys()
 
-	local root = "dynamic_leans_and_crouch/"
+	local root = "dlac/"
 
 	STATE.adjustment_key = ui_mcm.get(root .. "general_dlac/adjustment_keybind") or DIK_keys.DIK_LMENU
+
+	local new_crouch_enabled = ui_mcm.get(root .. "crouch_dlac/crouch_enabled")
+	if new_crouch_enabled == nil then new_crouch_enabled = true end
+	if STATE.crouch_enabled and not new_crouch_enabled then reset_crouch_to_neutral() end
+	STATE.crouch_enabled = new_crouch_enabled
+
 	STATE.crouch_from_nothing = ui_mcm.get(root .. "crouch_dlac/crouch_from_nothing")
 	STATE.crouch_keybind_down = ui_mcm.get(root .. "crouch_dlac/adjustment_keybind_down")
 	STATE.crouch_keybind_step = CONFIG.CROUCH_KEYBIND_BASE
@@ -584,6 +544,12 @@ function on_option_change()
 	STATE.default_reset_timer = ui_mcm.get(root .. "general_dlac/default_reset_timer") or 0
 	STATE.dynamically_switch_sides = ui_mcm.get(root .. "lean_dlac/dynamically_switch_sides")
 	STATE.dynamically_switch_stances = ui_mcm.get(root .. "crouch_dlac/dynamically_switch_stances")
+
+	local new_lean_enabled = ui_mcm.get(root .. "lean_dlac/lean_enabled")
+	if new_lean_enabled == nil then new_lean_enabled = true end
+	if STATE.lean_enabled and not new_lean_enabled then release_lean_to_neutral() end
+	STATE.lean_enabled = new_lean_enabled
+
 	STATE.lean_from_nothing = ui_mcm.get(root .. "lean_dlac/lean_from_nothing")
 	STATE.lean_keybind_left = ui_mcm.get(root .. "lean_dlac/adjustment_keybind_left")
 	STATE.lean_keybind_right = ui_mcm.get(root .. "lean_dlac/adjustment_keybind_right")
@@ -614,6 +580,8 @@ function on_option_change()
 end
 
 local last_update_time = time_global()
+-- Per-frame: reasserts hold-mode lean, and eases any pending reset
+-- animations toward their target.
 function on_update()
 	local now = time_global()
 	local dt = (now - last_update_time) / 1000
@@ -621,10 +589,8 @@ function on_update()
 
 	if not STATE.mod_enabled then return end
 
-	-- Hold mode only: hold_action appears to need continuous reassertion to
-	-- stick, unlike toggle mode's press_action which persists on its own.
-	-- Reasserting press_action here instead would just flip the toggle
-	-- every frame, so this must never run in toggle mode.
+	-- Hold mode only -- hold_action needs continuous reassertion to stick.
+	-- Never run this in toggle mode, or press_action would flip it every frame.
 	if not get_console_cmd(1, "g_lookout_toggle") and STATE.lean_side then
 		level.hold_action(lean_key_for(STATE.lean_side))
 	end
@@ -635,7 +601,7 @@ function on_update()
 			set_lean_value(lean_value_l)
 			if lean_value_l == STATE.lean_target_l then STATE.lean_target_l = nil end
 		else
-			STATE.lean_target_l = nil -- no longer the active side, cancel the stale animation
+			STATE.lean_target_l = nil
 		end
 	end
 
@@ -645,7 +611,7 @@ function on_update()
 			set_lean_value(lean_value_r)
 			if lean_value_r == STATE.lean_target_r then STATE.lean_target_r = nil end
 		else
-			STATE.lean_target_r = nil -- no longer the active side, cancel the stale animation
+			STATE.lean_target_r = nil
 		end
 	end
 
