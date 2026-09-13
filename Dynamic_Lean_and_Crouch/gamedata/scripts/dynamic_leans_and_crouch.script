@@ -97,9 +97,9 @@ local STATE = {
 local apply_crouch_delta, apply_lean_delta, begin_crouch_reset, begin_lean_reset,
       compute_axis_weights, dispatch_lean_input, full_reset, get_lean_magnitude,
       handle_crouch_key_press, handle_lean_key_press, handle_sprint_key_press,
-      lean_key_for, refresh_keys, set_crouch_engaged, set_crouch_value,
-      set_lean_engaged, set_lean_magnitude, set_lean_value, step_toward,
-      try_enter_crouch, try_enter_prone, try_exit_prone, try_exit_to_standing
+      lean_key_for, refresh_keys, release_lean_to_neutral, set_crouch_engaged,
+      set_crouch_value, set_lean_engaged, set_lean_magnitude, set_lean_value,
+      step_toward, try_enter_crouch, try_enter_prone, try_exit_prone, try_exit_to_standing
 
 -- ============================================================================
 -- Implementations, alphabetical
@@ -227,11 +227,11 @@ compute_axis_weights = function(dx, dy)
 	return lean_weight, stance_weight
 end
 
--- Shared by every input mode (mouse, scroll, keybind): given "which
--- direction this input clearly favors" and its magnitude this tick, applies
--- it through the same lean system regardless of what produced it. If a lean
--- is already active, moving toward the active side increases it and moving
--- away decreases it (enabling the dynamic side-flip); if nothing is active,
+-- Shared by every input mode (mouse, keybind): given "which direction this
+-- input clearly favors" and its magnitude this tick, applies it through the
+-- same lean system regardless of what produced it. If a lean is already
+-- active, moving toward the active side increases it and moving away
+-- decreases it (enabling the dynamic side-flip); if nothing is active,
 -- Lean From Nothing decides whether this starts a fresh lean.
 dispatch_lean_input = function(desired_side, magnitude)
 	if STATE.lean_side == "l" then
@@ -248,14 +248,7 @@ end
 -- turning it off before removing the mod's files won't leave the character
 -- stuck leaning or crouched with nothing able to reset it.
 full_reset = function()
-	lean_value_l, lean_value_r = 1, 1
-	set_lean_value(1)
-
-	if STATE.lean_side then
-		set_lean_engaged(lean_key_for(STATE.lean_side), false)
-		STATE.lean_side = nil
-	end
-	STATE.lean_target_l, STATE.lean_target_r = nil, nil
+	release_lean_to_neutral()
 
 	if STATE.stance == "prone" then
 		level.press_action(KEYS.accel) -- back to plain crouch before standing up
@@ -324,13 +317,7 @@ end
 -- contrast, ARE already cancelled by vanilla sprint on their own -- only
 -- sync tracking for those, don't press crouch_key/accel_key ourselves.
 handle_sprint_key_press = function()
-	if STATE.lean_side then
-		set_lean_engaged(lean_key_for(STATE.lean_side), false)
-		STATE.lean_side = nil
-		lean_value_l, lean_value_r = 1, 1
-		set_lean_value(1)
-		STATE.lean_target_l, STATE.lean_target_r = nil, nil
-	end
+	release_lean_to_neutral()
 
 	STATE.stance = "standing"
 	STATE.crouch_offset = 0
@@ -351,6 +338,18 @@ refresh_keys = function()
 	KEYS.lean_left = bind_to_dik(key_bindings.kL_LOOKOUT)
 	KEYS.lean_right = bind_to_dik(key_bindings.kR_LOOKOUT)
 	KEYS.sprint = bind_to_dik(key_bindings.kSPRINT_TOGGLE)
+end
+
+-- Fully releases the current lean: engine action off, tracking cleared,
+-- magnitude back to default, any pending reset animation cancelled.
+release_lean_to_neutral = function()
+	if STATE.lean_side then
+		set_lean_engaged(lean_key_for(STATE.lean_side), false)
+		STATE.lean_side = nil
+	end
+	lean_value_l, lean_value_r = 1, 1
+	set_lean_value(1)
+	STATE.lean_target_l, STATE.lean_target_r = nil, nil
 end
 
 -- Toggles crouch on/off, respecting hold vs toggle crouch config.
@@ -529,6 +528,7 @@ function on_game_start()
 	RegisterScriptCallback("on_before_key_hold", on_before_key_hold)
 
 	RegisterScriptCallback("on_key_press", on_key_press)
+	RegisterScriptCallback("on_key_release", on_key_release)
 
 	RegisterScriptCallback("on_option_change", on_option_change)
 	RegisterScriptCallback("actor_on_first_update", on_option_change)
@@ -545,6 +545,27 @@ function on_key_press(key)
 
 	if key == KEYS.lean_left then handle_lean_key_press("l")
 	elseif key == KEYS.lean_right then handle_lean_key_press("r") end
+end
+
+-- Hold mode only (g_lookout_toggle off): keeps our own lean tracking in
+-- sync with vanilla's own release handling. Releasing the real lean key
+-- syncs tracking to what vanilla already stopped on its own; releasing the
+-- adjustment key resets a mouse/keybind-driven lean, since there's no real
+-- key for vanilla to have released in that case.
+function on_key_release(key)
+	if not STATE.mod_enabled then return end
+	if get_console_cmd(1, "g_lookout_toggle") then return end
+
+	if key == STATE.adjustment_key then
+		if STATE.lean_side then release_lean_to_neutral() end
+		return
+	end
+
+	if key == KEYS.lean_left and STATE.lean_side == "l" then
+		STATE.lean_side = nil
+	elseif key == KEYS.lean_right and STATE.lean_side == "r" then
+		STATE.lean_side = nil
+	end
 end
 
 -- Reads every MCM value into STATE. Runs at game start and on every option
@@ -599,6 +620,14 @@ function on_update()
 	last_update_time = now
 
 	if not STATE.mod_enabled then return end
+
+	-- Hold mode only: hold_action appears to need continuous reassertion to
+	-- stick, unlike toggle mode's press_action which persists on its own.
+	-- Reasserting press_action here instead would just flip the toggle
+	-- every frame, so this must never run in toggle mode.
+	if not get_console_cmd(1, "g_lookout_toggle") and STATE.lean_side then
+		level.hold_action(lean_key_for(STATE.lean_side))
+	end
 
 	if STATE.lean_target_l then
 		if STATE.lean_side == "l" then
