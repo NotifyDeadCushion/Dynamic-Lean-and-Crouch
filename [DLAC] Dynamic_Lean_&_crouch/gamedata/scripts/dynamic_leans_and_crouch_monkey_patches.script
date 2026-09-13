@@ -1,0 +1,37 @@
+
+local lean_tree_name = "lean_dlac"
+dlac = dynamic_leans_and_crouch
+
+use_lean_for_liz_inertia_factor = true
+
+function on_option_change()
+	use_lean_for_liz_inertia_factor = ui_mcm.get("dynamic_leans_and_crouch/" .. lean_tree_name .. "/use_lean_for_liz_inertia_factor")
+	control_mode_lean = ui_mcm.get("dynamic_leans_and_crouch/" .. lean_tree_name .. "/adjustment_mode")
+	control_mode_lean = dlac.control_modes[control_mode_lean] or 0
+end
+
+lie = liz_inertia_expanded
+
+function lie_new_update_move_state_info()
+	local block_crouch = false
+	if use_lean_for_liz_inertia_factor and (control_mode_lean ~= 2) then
+		if IsMoveState('mcLLookout') then lie.set_lerp("lean_l", lie.mcm_lean_l_power * lie.wpn_config.l * dlac.lean_value_l); block_crouch = true else lie.set_lerp("lean_l", 0) end
+		if IsMoveState('mcRLookout') then lie.set_lerp("lean_r", lie.mcm_lean_r_power * lie.wpn_config.r * dlac.lean_value_r); block_crouch = true else lie.set_lerp("lean_r", 0) end
+	end
+	if not block_crouch then
+		if IsMoveState('mcCrouch') then lie.set_lerp("crouch", lie.mcm_crouch_power * lie.wpn_config.c) else lie.set_lerp("crouch", lie.mcm_lower_weapon_on_look_up and lie.look_up_factor * lie.wpn_config.u or 0) end
+	else
+		lie.set_lerp("crouch", 0)
+	end
+end
+
+function on_game_start()
+	
+	RegisterScriptCallback("on_option_change", on_option_change)
+	RegisterScriptCallback("actor_on_first_update", on_option_change)
+
+
+	if lie then
+		lie.update_move_state_info = lie_new_update_move_state_info
+	end
+end

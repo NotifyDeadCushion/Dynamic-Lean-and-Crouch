@@ -1,0 +1,120 @@
+-- just some useful stuff i use for testing
+
+local stored_strs = {}
+
+local stored_unq_strs = {}
+
+local fixed_delay = 2
+
+-- only prints if there are changes / per delay
+
+function print_unique(id, text, ...)
+	local str = string.format(text, ...)
+	stored_unq_strs[id] = stored_unq_strs[id] or {}
+	if stored_unq_strs[id][str] then return end
+	stored_unq_strs[id] = {}
+	stored_unq_strs[id][str] = true
+	printf(str)
+end
+
+-- above function stores one string at a time for a specific id
+-- for the first print, its a unique string to the id, then stored_unq_strs[id][str] is false and it goes through and prints
+-- subsequently, if non-unique string to the id, then stored_unq_strs[id][str] is true and it doesnt go through
+-- otherwise, if its a new str to the id, then stored_unq_strs[id][str] is false and it empties the table, replaces the old unique string with itself and prints
+-- id should preferably be script name to avoid conflicts
+
+function print_slow(text, ...)
+	local str = string.format(text, ...)
+	if stored_strs[str] then return end
+	stored_strs[str] = true
+	printf(str)
+	CreateTimeEvent("ver_scripted_utils", "str_table_emptier", fixed_delay, function(str)
+		stored_strs[str] = false
+		return true
+	end, str)
+end
+
+function print_slow_delay(delay, text, ...)
+	local str = string.format(text, ...)
+	if stored_strs[str] then return end
+	stored_strs[str] = true
+	printf(str)
+	CreateTimeEvent("ver_scripted_utils", "str_table_emptier", delay, function(str)
+		stored_strs[str] = false
+		return true
+	end, str)
+end
+
+
+
+-- imgui stuff that i sometimes use
+
+local imgui_text = ""
+local imgui_text_tbl = {}
+local imgui_text_indices = {}
+
+-- ver_scripting_utils.add_imgui_text
+-- ver_scripting_utils.remove_imgui_text
+
+function add_imgui_text(id, text, ...)
+	local str = string.format(text, ...)
+	local ret = true
+	if imgui_text_indices[id] then
+		-- if id is already assigned to an index, replace string at that index instead of creating a new one
+		ret = false
+		imgui_text_tbl[imgui_text_indices[id]] = str
+	else
+		-- otherwise if not already assigned, create a new index and store it here
+		local index = #imgui_text_tbl + 1
+		imgui_text_tbl[index] = str
+		imgui_text_indices[id] = index
+	end
+	return ret
+	-- id, preferably, should be script name
+	-- returns true if the creation of the id is unique / inaugural
+end
+
+function remove_imgui_text(id)
+	local index = imgui_text_indices[id]
+	imgui_text_tbl[index] = nil
+	imgui_text_indices[id] = nil
+end
+
+function create_imgui_text()
+	local text = table.concat(imgui_text_tbl, "\n") or ""
+	return text
+end
+
+-- btw thank you so much lucy for the guide on the modding book
+
+local my_window_visible = false
+
+function CreateOverlay()
+	if not my_window_visible then return end
+	expanded, _ = ImGui.Begin("Ver Utils", true)
+	
+	if expanded then
+		
+		local text = create_imgui_text()
+		ImGui.Text(text)
+		
+	end
+	
+	ImGui.End()
+end
+
+AddUniqueCall(CreateOverlay)
+
+function imgui_on_render(name)
+	if name == "MenuBar" then
+		if ImGui.BeginMenu("Ver Utils") then
+			clicked, my_window_visible = ImGui.MenuItem("Overlay", nil, my_window_visible, true)
+			SendScriptCallback("imgui_on_render", "MyMenu")
+			ImGui.EndMenu()
+		end
+	end
+end
+
+function on_game_start()
+	RegisterScriptCallback("imgui_on_render", imgui_on_render)
+end
