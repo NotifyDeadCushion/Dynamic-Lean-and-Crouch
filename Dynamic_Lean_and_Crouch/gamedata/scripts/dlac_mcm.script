@@ -8,7 +8,7 @@ function on_mcm_load()
 				{ id = "mod_enabled", type = "check", val = 1, def = true },
 				{ id = "divider", type = "line" },
 				{ id = "sprint_removes_stance_and_lean", type = "check", val = 1, def = true },
-				{ id = "default_reset_timer", type = "track", val = 2, def = 5, min = 0, max = 60, step = 1 },
+				{ id = "remember_duration", type = "track", val = 2, def = 5, min = 0, max = 60, step = 1 },
 				{ id = "general_adjustment_keybind_header", type = "slide", text = "dlac_adjustment_keybind_title", size = {512,50}, spacing = 20 },
 				{ id = "adjustment_keybind", type = "key_bind", val = 2, def = DIK_keys.DIK_LMENU, },
 			}

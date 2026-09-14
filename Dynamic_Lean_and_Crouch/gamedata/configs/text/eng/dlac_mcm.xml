@@ -20,9 +20,6 @@
         <text>Nudges the angle/height up and down. Only does anything in keybind mode.</text>
     </string>
 	
-	<string id="dlac_behavior_title">
-        <text>Behavior</text>
-    </string>
 	<string id="dlac_sensitivity_title">
         <text>Sensitivity</text>
     </string>
@@ -168,11 +165,11 @@
 	<string id="ui_mcm_dlac_general_dlac_sprint_removes_stance_and_lean_desc">
         <text>When trying to sprint you are no longer held back by a lean or by a crouch. Your character will automaticly stand up straight and break the lean so you can easily sprint out of stressfull situations.</text>
     </string>
-	<string id="ui_mcm_dlac_general_dlac_default_reset_timer">
-        <text>Reset To Default Position</text>
+	<string id="ui_mcm_dlac_general_dlac_remember_duration">
+        <text>Remember Angle/Height</text>
     </string>
-	<string id="ui_mcm_dlac_general_dlac_default_reset_timer_desc">
-        <text>How long it takes for the normal crouch/lean keys to get back their default angle or height after you use them. To turn this off set the slider to zero.</text>
+	<string id="ui_mcm_dlac_general_dlac_remember_duration_desc">
+        <text>How long a released lean or crouch stays remembered before it resets to normal. Re-engage within this window and you pick up right where you left off; wait longer and it starts fresh like vanilla. Set to zero to remember forever.</text>
     </string>
 	<string id="ui_mcm_dlac_general_dlac_adjustment_keybind">
         <text>Dynamic Adjustment Key</text>
