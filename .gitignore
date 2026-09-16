@@ -1,5 +1,10 @@
 # VS Code
 .vscode/
+*.code-workspace
+
+# Local notes
+.Claude
+CLAUDE.md
 
 # Visual Studio
 .vs/

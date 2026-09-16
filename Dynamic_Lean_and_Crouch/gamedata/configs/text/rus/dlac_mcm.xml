@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="windows-1251"?>
+
+<string_table>
+    <string id="ui_mcm_menu_dlac">
+        <text>Динамический наклон и присед</text>
+    </string>
+    <string id="dlac_lean_title">
+        <text>Наклон</text>
+    </string>
+    <string id="dlac_crouch_title">
+        <text>Присед</text>
+    </string>
+    <string id="dlac_adjustment_keybind_title">
+        <text>Клавиша регулировки</text>
+    </string>
+    <string id="dlac_adjustment_keybind_up_down_title">
+        <text>Клавиши увеличения/уменьшения</text>
+    </string>
+    <string id="dlac_adjustment_keybind_up_down_title_desc">
+        <text>Плавно изменяют угол/высоту вверх и вниз. Работают только в режиме управления клавишами.</text>
+    </string>
+
+    <string id="dlac_sensitivity_title">
+        <text>Чувствительность</text>
+    </string>
+
+    <string id="ui_mcm_dlac_lean_dlac_lean_enabled">
+        <text>Включить наклон</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_lean_enabled_desc">
+        <text>Включает или выключает динамический наклон. Обычная клавиша наклона в любом случае работает как в ванильной игре.</text>
+    </string>
+
+    <string id="ui_mcm_dlac_lean_dlac_adjustment_mode">
+        <text>Режим регулировки</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_adjustment_mode_desc">
+        <text>Как вы управляете динамическим наклоном: движением мыши или отдельными клавишами.</text>
+    </string>
+    <string id="dlac_lean_dlac_adjustment_mode_lst_mouse_move">
+        <text>Движение мыши</text>
+    </string>
+    <string id="dlac_lean_dlac_adjustment_mode_lst_keybind">
+        <text>Клавиши</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_mouse_sensitivity_factor">
+        <text>Чувствительность мыши</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_mouse_sensitivity_factor_desc">
+        <text>Насколько сильно движение мыши изменяет угол наклона. Значение по умолчанию — ползунок посередине.</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_keybind_sensitivity_factor">
+        <text>Чувствительность клавиш</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_keybind_sensitivity_factor_desc">
+        <text>Насколько сильно нажатие клавиши изменяет угол наклона. Значение по умолчанию — ползунок посередине.</text>
+    </string>
+
+    <string id="ui_mcm_dlac_lean_dlac_use_lean_for_liz_inertia_factor">
+        <text>Наклон влияет на силу анимации Liz Inertia</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_use_lean_for_liz_inertia_factor_desc">
+        <text>Масштабирует анимацию наклона Liz Inertia в зависимости от того, насколько сильно вы наклонены, вместо постоянной полной силы.</text>
+    </string>
+
+    <string id="ui_mcm_dlac_lean_dlac_adjustment_keybind_left">
+        <text>Клавиша наклона влево</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_adjustment_keybind_left_desc">
+        <text>Удерживайте вместе с клавишей регулировки, чтобы сильнее наклоняться влево.</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_adjustment_keybind_right">
+        <text>Клавиша наклона вправо</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_adjustment_keybind_right_desc">
+        <text>Удерживайте вместе с клавишей регулировки, чтобы сильнее наклоняться вправо.</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_dynamically_switch_sides">
+        <text>Динамическая смена сторон</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_dynamically_switch_sides_desc">
+        <text>Позволяет динамически менять сторону наклона вместо остановки посередине. Теперь можно легко перевести наклон с левой стороны на правую и обратно. Можно даже пройти влево, вправо, влево и снова вправо.</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_lean_from_nothing">
+        <text>Наклон из нейтрального положения</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_lean_from_nothing_desc">
+        <text>Делает обычную клавишу наклона ненужной. Теперь можно просто удерживать клавишу регулировки и начинать наклон из нейтрального положения.</text>
+    </string>
+
+    <string id="ui_mcm_dlac_crouch_dlac_crouch_enabled">
+        <text>Включить присед</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_crouch_enabled_desc">
+        <text>Включает или выключает динамический присед. Обычная клавиша приседа в любом случае работает как в ванильной игре.</text>
+    </string>
+
+    <string id="ui_mcm_dlac_crouch_dlac_adjustment_mode">
+        <text>Режим регулировки</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_adjustment_mode_desc">
+        <text>Как вы управляете динамическим приседом: движением мыши или отдельными клавишами.</text>
+    </string>
+    <string id="dlac_crouch_dlac_adjustment_mode_lst_mouse_move">
+        <text>Движение мыши</text>
+    </string>
+    <string id="dlac_crouch_dlac_adjustment_mode_lst_keybind">
+        <text>Клавиши</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_mouse_sensitivity_factor">
+        <text>Чувствительность мыши</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_mouse_sensitivity_factor_desc">
+        <text>Насколько сильно движение мыши изменяет высоту. Значение по умолчанию — ползунок посередине.</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_keybind_sensitivity_factor">
+        <text>Чувствительность клавиш</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_keybind_sensitivity_factor_desc">
+        <text>Насколько сильно нажатие клавиши изменяет высоту. Значение по умолчанию — ползунок посередине.</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_adjustment_keybind_up">
+        <text>Клавиша подъёма</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_adjustment_keybind_up_desc">
+        <text>Удерживайте вместе с клавишей регулировки, чтобы подниматься выше.</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_adjustment_keybind_down">
+        <text>Клавиша опускания</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_adjustment_keybind_down_desc">
+        <text>Удерживайте вместе с клавишей регулировки, чтобы опускаться ниже.</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_dynamically_switch_stances">
+        <text>Динамическая смена стойки</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_dynamically_switch_stances_desc">
+        <text>Динамически меняет стойку при достижении определённой высоты. То есть автоматически переводит вас в положение на корточках, стоя или лёжа.</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_crouch_from_nothing">
+        <text>Присед из нейтрального положения</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_crouch_from_nothing_desc">
+        <text>Делает обычную клавишу приседа ненужной. Теперь можно просто удерживать клавишу регулировки и начинать приседать из нейтрального положения.</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_stance_commit_factor">
+        <text>Порог смены стойки</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_stance_commit_factor_desc">
+        <text>Не позволяет слишком легко выходить из стойки или переходить в неё. Для перехода в стойку или из неё теперь требуется определённая величина воздействия. Лечь на живот намеренно сложнее, чем встать на ноги. Этот ползунок масштабирует оба значения вместе, сохраняя баланс между ними.</text>
+    </string>
+
+    <string id="dlac_general_title">
+        <text>Общее</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_mod_enabled">
+        <text>Включить мод</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_mod_enabled_desc">
+        <text>Главный переключатель. При выключении сначала ставит вас прямо и убирает любой наклон, поэтому это безопасный способ отключить мод. Сделайте это перед удалением мода, иначе можно застрять в приседе.</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_sprint_removes_stance_and_lean">
+        <text>Спринт отменяет стойку и наклон</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_sprint_removes_stance_and_lean_desc">
+        <text>При попытке перейти в спринт наклон или присед больше не мешают вам. Персонаж автоматически выпрямляется и снимает наклон, чтобы вы могли легко убежать из опасной ситуации.</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_remember_duration">
+        <text>Запоминать угол/высоту</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_remember_duration_desc">
+        <text>Как долго отпущенный наклон или присед остаётся запомненным, прежде чем сброситься в обычное положение. Возобновите его в течение этого времени — и продолжите с того же места; подождите дольше — и всё начнётся заново, как в ванильной игре. Установите ноль, чтобы сохранять положение бессрочно.</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_adjustment_keybind">
+        <text>Клавиша динамической регулировки</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_adjustment_keybind_desc">
+        <text>Эту клавишу нужно удерживать вместе с мышью или клавишами регулировки, чтобы начать наклон или присед. По умолчанию — LEFT-ALT.</text>
+    </string>
+</string_table>

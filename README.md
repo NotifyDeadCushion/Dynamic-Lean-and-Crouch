@@ -37,6 +37,10 @@ Don't want to use the mouse? Both leaning and crouching also support a **keybind
 * **Sprinting Removes Stance And Lean:** Sprinting automatically returns you to standing and removes any active lean instead of simply preventing you from sprinting.
 * **Remember Angle / Height:** Remembers your last lean or crouch position, allowing you to quickly return to it within the configured time window. Zero disables the timer.
 
+## Installation
+
+Install the mod through **Mod Organizer 2** as you would any other Anomaly mod. Enable the mod in your MO2 left pane, then launch Anomaly.
+
 ## Compatibility
 
 Includes integration with **Liz Inertia Expanded**.

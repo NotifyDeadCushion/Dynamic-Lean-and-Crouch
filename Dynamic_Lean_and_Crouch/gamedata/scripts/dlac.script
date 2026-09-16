@@ -1,5 +1,5 @@
 -- Dynamic Lean and Crouch
--- Version: V1.212
+-- Version: V1.220
 -- Author: Verdatim, Boeker
 
 lean_value_l = 1 -- global: dlac_monkey_patches.script reads these directly
@@ -27,6 +27,8 @@ local CONFIG = {
 }
 
 control_modes = { keybind = 1, mouse_move = 0 } -- global: dlac_monkey_patches.script reads this
+
+local LEAN_SWITCH_RATE = 1 / CONFIG.LEAN_SWITCH_SECONDS_PER_UNIT -- magnitude units eased per second
 
 -- ----------------------------------------------------------------------------
 -- KEYS
@@ -370,14 +372,12 @@ end
 -- time proportional to how far it has to travel. Returns target exactly
 -- once close enough, so equality checks against it stay float-safe.
 step_toward = function(current, target, dt)
-	local rate = 1 / CONFIG.LEAN_SWITCH_SECONDS_PER_UNIT
 	local diff = target - current
-	local move = rate * dt
+	local move = LEAN_SWITCH_RATE * dt
 	if math.abs(diff) <= move then return target end
 	return current + (diff > 0 and move or -move)
 end
 
--- Standing to crouching.
 -- Standing to crouching, from a mouse pull clearing the deadband. Arrives
 -- a bit past the boundary rather than right at it, so the first bit of
 -- depth is felt immediately instead of the entry feeling weightless.
@@ -386,8 +386,9 @@ try_enter_crouch = function()
 	STATE.stance = "crouching"
 	STATE.stance_lock_until = time_global() + CONFIG.STANCE_LOCK_MS
 	STATE.stance_overshoot = 0
-	STATE.crouch_offset = CONFIG.MAX_CROUCH - CONFIG.CROUCH_ARRIVAL_WEIGHT
-	set_crouch_value(CONFIG.MAX_CROUCH - CONFIG.CROUCH_ARRIVAL_WEIGHT)
+	local depth = CONFIG.MAX_CROUCH - CONFIG.CROUCH_ARRIVAL_WEIGHT
+	STATE.crouch_offset = depth
+	set_crouch_value(depth)
 end
 
 -- Requires sustained push, not just a touch, so a fast swipe can't blow
@@ -419,8 +420,9 @@ try_exit_prone = function(delta)
 	STATE.stance = "crouching"
 	STATE.stance_lock_until = time_global() + CONFIG.STANCE_LOCK_MS
 	STATE.stance_overshoot = 0
-	STATE.crouch_offset = CONFIG.MIN_CROUCH + CONFIG.CROUCH_ARRIVAL_WEIGHT
-	set_crouch_value(CONFIG.MIN_CROUCH + CONFIG.CROUCH_ARRIVAL_WEIGHT)
+	local depth = CONFIG.MIN_CROUCH + CONFIG.CROUCH_ARRIVAL_WEIGHT
+	STATE.crouch_offset = depth
+	set_crouch_value(depth)
 end
 
 -- Crouching to standing. Same overshoot rule as entering prone.
