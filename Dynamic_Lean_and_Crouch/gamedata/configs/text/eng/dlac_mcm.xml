@@ -43,6 +43,9 @@
 	<string id="dlac_lean_dlac_adjustment_mode_lst_keybind">
         <text>Keybind</text>
     </string>
+	<string id="dlac_lean_dlac_adjustment_mode_lst_mouse_wheel">
+        <text>Mouse Wheel</text>
+    </string>
 	<string id="ui_mcm_dlac_lean_dlac_mouse_sensitivity_factor">
         <text>Mouse Movement Sensitivity</text>
     </string>
@@ -55,7 +58,13 @@
 	<string id="ui_mcm_dlac_lean_dlac_keybind_sensitivity_factor_desc">
         <text>How much a keypress actually leans you. Putting the slider back in the middel is the default value.</text>
     </string>
-	
+	<string id="ui_mcm_dlac_lean_dlac_wheel_sensitivity_factor">
+        <text>Mouse Wheel Sensitivity</text>
+    </string>
+	<string id="ui_mcm_dlac_lean_dlac_wheel_sensitivity_factor_desc">
+        <text>How much a wheel notch actually leans you. Putting the slider back in the middel is the default value.</text>
+    </string>
+
 	<string id="ui_mcm_dlac_lean_dlac_use_lean_for_liz_inertia_factor">
         <text>Lean affects Liz Inertia Anim Power</text>
     </string>
@@ -107,6 +116,9 @@
 	<string id="dlac_crouch_dlac_adjustment_mode_lst_keybind">
         <text>Keybind</text>
     </string>
+	<string id="dlac_crouch_dlac_adjustment_mode_lst_mouse_wheel">
+        <text>Mouse Wheel</text>
+    </string>
 	<string id="ui_mcm_dlac_crouch_dlac_mouse_sensitivity_factor">
         <text>Mouse Movement Sensitivity</text>
     </string>
@@ -118,6 +130,12 @@
     </string>
 	<string id="ui_mcm_dlac_crouch_dlac_keybind_sensitivity_factor_desc">
         <text>How much a keypress actually changes height. Putting the slider back in the middel is the default value.</text>
+    </string>
+	<string id="ui_mcm_dlac_crouch_dlac_wheel_sensitivity_factor">
+        <text>Mouse Wheel Sensitivity</text>
+    </string>
+	<string id="ui_mcm_dlac_crouch_dlac_wheel_sensitivity_factor_desc">
+        <text>How much a wheel notch actually changes height. Putting the slider back in the middel is the default value.</text>
     </string>
 	<string id="ui_mcm_dlac_crouch_dlac_adjustment_keybind_up">
         <text>Up Adjustment Keybind</text>
@@ -176,5 +194,11 @@
     </string>
 	<string id="ui_mcm_dlac_general_dlac_adjustment_keybind_desc">
         <text>This key needs to be held down together with the mouse or keybind to start leaning or crouching. Default is LEFT-ALT.</text>
+    </string>
+	<string id="ui_mcm_dlac_general_dlac_wheel_target_switch_enabled">
+        <text>Lean/Crouch Wheel Switch</text>
+    </string>
+	<string id="ui_mcm_dlac_general_dlac_wheel_target_switch_enabled_desc">
+        <text>If both lean and crouch are set to Mouse Wheel, the wheel can only drive one at a time. When enabled, holding the adjustment key and pressing the middle mouse button switches which one it currently controls; the middle mouse button behaves normally otherwise.</text>
     </string>
 </string_table>

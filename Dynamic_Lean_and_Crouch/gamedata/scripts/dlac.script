@@ -1,5 +1,5 @@
 -- Dynamic Lean and Crouch
--- Version: V1.220
+-- Version: V1.222
 -- Author: Verdatim, Boeker
 
 lean_value_l = 1 -- global: dlac_monkey_patches.script reads these directly
@@ -13,10 +13,12 @@ local CONFIG = {
 	CROUCH_FROM_NOTHING_DEADBAND = 0.005,   -- min push needed to start crouching from standing (mouse only)
 	CROUCH_KEYBIND_BASE          = 0.005,   -- crouch offset per keybind tick, at sensitivity factor 5 (middle)
 	CROUCH_MOUSE_MOVE_BASE       = 0.00025, -- crouch offset per pixel, at sensitivity factor 1
+	CROUCH_WHEEL_BASE            = 0.010,   -- crouch offset per wheel notch, at sensitivity factor 5 (middle)
 	LEAN_FROM_NOTHING_DEADBAND   = 3,       -- min mouse pixels needed to start a lean from neutral
 	LEAN_KEYBIND_BASE            = 0.05,    -- lean coefficient per keybind tick, at sensitivity factor 5 (middle)
 	LEAN_MOUSE_MOVE_BASE         = 0.0025,  -- lean coefficient per pixel, at sensitivity factor 1
 	LEAN_SWITCH_SECONDS_PER_UNIT = 0.3,     -- seconds to ease per unit of lean magnitude when switching sides
+	LEAN_WHEEL_BASE              = 0.05,    -- lean coefficient per wheel notch, at sensitivity factor 5 (middle)
 	MAX_CROUCH                   = 0.25,    -- crouch offset at the standing/crouch boundary
 	MAX_LEAN                     = 2,       -- maximum lean coefficient
 	MIN_CROUCH                   = -0.35,   -- crouch offset at the crouch/prone boundary
@@ -26,9 +28,10 @@ local CONFIG = {
 	STANCE_TRANSITION_STANDING_RATIO = 0.5,  -- standing's threshold = base * this ratio
 }
 
-control_modes = { keybind = 1, mouse_move = 0 } -- global: dlac_monkey_patches.script reads this
+control_modes = { keybind = 1, mouse_move = 0, mouse_wheel = 2 } -- global: dlac_monkey_patches.script reads this
 
 local LEAN_SWITCH_RATE = 1 / CONFIG.LEAN_SWITCH_SECONDS_PER_UNIT -- magnitude units eased per second
+local WHEEL_TARGET_SWITCH_KEY = DIK_keys.MOUSE_3 -- fixed, not rebindable; toggles wheel_target while the adjustment key is held
 
 -- ----------------------------------------------------------------------------
 -- KEYS
@@ -49,6 +52,7 @@ local STATE = {
 	crouch_keybind_up              = DIK_keys.DIK_W, -- keybind-mode nudge key, crouch higher
 	crouch_offset                  = 0,     -- current crouch depth, CONFIG.MIN_CROUCH..CONFIG.MAX_CROUCH
 	crouch_released_at             = nil,   -- time_global() when crouch was last exited, or nil if never used
+	crouch_wheel_step              = CONFIG.CROUCH_WHEEL_BASE, -- crouch offset per wheel notch, scaled by sensitivity
 	dynamically_switch_sides       = true,  -- lets a lean flip to the other side past the limit
 	dynamically_switch_stances     = true,  -- lets crouch flow into prone/standing past the limit
 	lean_enabled                   = true,  -- master on/off for dynamic lean control
@@ -61,6 +65,7 @@ local STATE = {
 	lean_side                      = nil,   -- nil | "l" | "r"
 	lean_target_l                  = nil,   -- pending ease target for left, set only on a side-switch
 	lean_target_r                  = nil,   -- pending ease target for right, set only on a side-switch
+	lean_wheel_step                = CONFIG.LEAN_WHEEL_BASE, -- lean coefficient per wheel notch, scaled by sensitivity
 	mod_enabled                    = true,  -- master on/off for the whole mod
 	mode_crouch                    = control_modes.mouse_move, -- current crouch adjustment mode
 	mode_lean                      = control_modes.mouse_move, -- current lean adjustment mode
@@ -74,6 +79,9 @@ local STATE = {
 	stance_transition_overshoot_prone    = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE, -- push needed to commit to prone
 	stance_transition_overshoot_standing = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE
 		* CONFIG.STANCE_TRANSITION_STANDING_RATIO, -- push needed to commit to standing
+	wheel_target                   = "lean", -- "lean" | "crouch"; which one the wheel drives when both are in wheel mode
+	wheel_target_switch_enabled    = true,  -- lets MOUSE3 (held with the adjustment key) toggle wheel_target
+	wheel_target_switch_held       = false, -- edge-detection: was the switch key already down last frame
 }
 
 -- ----------------------------------------------------------------------------
@@ -446,9 +454,23 @@ end
 -- Engine callbacks
 -- ----------------------------------------------------------------------------
 
--- Keybind-mode nudge input for lean and crouch.
+-- Keybind-mode nudge input for lean and crouch, plus the wheel-target
+-- switch. The switch is checked first and unconditionally (not gated on
+-- keybind mode), so MOUSE3 is only ever intercepted while the adjustment
+-- key is held -- released, it behaves exactly like vanilla.
 function on_before_key_hold(key, bind, dis, flags)
 	if not STATE.mod_enabled then return end
+
+	if STATE.wheel_target_switch_enabled and key == WHEEL_TARGET_SWITCH_KEY
+		and key_state(STATE.adjustment_key) == 1 then
+		if not STATE.wheel_target_switch_held then
+			STATE.wheel_target = (STATE.wheel_target == "lean") and "crouch" or "lean"
+			STATE.wheel_target_switch_held = true
+		end
+		flags.ret_value = false
+		return
+	end
+
 	if STATE.mode_lean ~= control_modes.keybind and STATE.mode_crouch ~= control_modes.keybind then return end
 
 	if STATE.lean_enabled and (key == STATE.lean_keybind_left or key == STATE.lean_keybind_right)
@@ -513,6 +535,7 @@ function on_game_start()
 
 	RegisterScriptCallback("on_before_mouse_move", on_before_mouse_move)
 	RegisterScriptCallback("on_before_key_hold", on_before_key_hold)
+	RegisterScriptCallback("on_mouse_wheel", on_mouse_wheel)
 
 	RegisterScriptCallback("on_key_press", on_key_press)
 	RegisterScriptCallback("on_key_release", on_key_release)
@@ -536,11 +559,18 @@ function on_key_press(key)
 	end
 end
 
--- Hold mode only. Real key release syncs tracking with what vanilla
--- already stopped; adjustment-key release resets a mouse/keybind-driven
--- lean, since no real key exists for vanilla to have released there.
+-- Resets the wheel-target switch's edge detection regardless of lean
+-- state. Everything past that is hold mode only: real key release syncs
+-- tracking with what vanilla already stopped; adjustment-key release
+-- resets a mouse/keybind-driven lean, since no real key exists for
+-- vanilla to have released there.
 function on_key_release(key)
 	if not STATE.mod_enabled then return end
+
+	if key == WHEEL_TARGET_SWITCH_KEY then
+		STATE.wheel_target_switch_held = false
+	end
+
 	if not STATE.lean_enabled then return end
 	if get_console_cmd(1, "g_lookout_toggle") then return end
 
@@ -553,6 +583,35 @@ function on_key_release(key)
 		STATE.lean_side = nil
 	elseif key == KEYS.lean_right and STATE.lean_side == "r" then
 		STATE.lean_side = nil
+	end
+end
+
+-- Mouse wheel adjustment for lean and crouch while the adjustment key is
+-- held. Wheel direction picks the lean side directly (no separate "which
+-- side" input like keybind mode has), so this needs no from-nothing deadband.
+-- If only one of lean/crouch is in wheel mode it always responds; if both
+-- are, only STATE.wheel_target responds, since one wheel can't drive two
+-- unrelated mechanics from the same notch.
+function on_mouse_wheel(direction, flags)
+	if not STATE.mod_enabled then return end
+	if STATE.mode_lean ~= control_modes.mouse_wheel and STATE.mode_crouch ~= control_modes.mouse_wheel then return end
+	if key_state(STATE.adjustment_key) ~= 1 then return end
+
+	local lean_wants_wheel = STATE.lean_enabled and STATE.mode_lean == control_modes.mouse_wheel
+	local crouch_wants_wheel = STATE.crouch_enabled and STATE.mode_crouch == control_modes.mouse_wheel
+
+	if lean_wants_wheel and (not crouch_wants_wheel or STATE.wheel_target == "lean") then
+		local desired_side = (direction > 0) and "r" or "l"
+		dispatch_lean_input(desired_side, STATE.lean_wheel_step)
+		flags.ret_value = false
+	end
+
+	if crouch_wants_wheel and (not lean_wants_wheel or STATE.wheel_target == "crouch") then
+		if STATE.stance ~= "standing" or STATE.crouch_from_nothing then
+			local polarity = (direction > 0) and 1 or -1
+			apply_crouch_delta(STATE.crouch_wheel_step * polarity, true)
+		end
+		flags.ret_value = false
 	end
 end
 
@@ -572,6 +631,8 @@ function on_option_change()
 	STATE.crouch_keybind_step = CONFIG.CROUCH_KEYBIND_BASE
 		* ((ui_mcm.get(root .. "crouch_dlac/keybind_sensitivity_factor") or 5) / 5)
 	STATE.crouch_keybind_up = ui_mcm.get(root .. "crouch_dlac/adjustment_keybind_up")
+	STATE.crouch_wheel_step = CONFIG.CROUCH_WHEEL_BASE
+		* ((ui_mcm.get(root .. "crouch_dlac/wheel_sensitivity_factor") or 5) / 5)
 	STATE.dynamically_switch_sides = ui_mcm.get(root .. "lean_dlac/dynamically_switch_sides")
 	STATE.dynamically_switch_stances = ui_mcm.get(root .. "crouch_dlac/dynamically_switch_stances")
 
@@ -582,6 +643,8 @@ function on_option_change()
 	STATE.lean_keybind_right = ui_mcm.get(root .. "lean_dlac/adjustment_keybind_right")
 	STATE.lean_keybind_step = CONFIG.LEAN_KEYBIND_BASE
 		* ((ui_mcm.get(root .. "lean_dlac/keybind_sensitivity_factor") or 5) / 5)
+	STATE.lean_wheel_step = CONFIG.LEAN_WHEEL_BASE
+		* ((ui_mcm.get(root .. "lean_dlac/wheel_sensitivity_factor") or 5) / 5)
 
 	STATE.mod_enabled = read_toggle(root .. "general_dlac/mod_enabled", STATE.mod_enabled, full_reset)
 
@@ -601,6 +664,8 @@ function on_option_change()
 	STATE.stance_transition_overshoot_prone = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE * stance_commit_factor
 	STATE.stance_transition_overshoot_standing = CONFIG.STANCE_TRANSITION_OVERSHOOT_BASE
 		* CONFIG.STANCE_TRANSITION_STANDING_RATIO * stance_commit_factor
+
+	STATE.wheel_target_switch_enabled = read_toggle(root .. "general_dlac/wheel_target_switch_enabled", STATE.wheel_target_switch_enabled)
 end
 
 local last_update_time = time_global()

@@ -43,6 +43,9 @@
     <string id="dlac_lean_dlac_adjustment_mode_lst_keybind">
         <text>Клавиши</text>
     </string>
+    <string id="dlac_lean_dlac_adjustment_mode_lst_mouse_wheel">
+        <text>Колесо мыши</text>
+    </string>
     <string id="ui_mcm_dlac_lean_dlac_mouse_sensitivity_factor">
         <text>Чувствительность мыши</text>
     </string>
@@ -54,6 +57,12 @@
     </string>
     <string id="ui_mcm_dlac_lean_dlac_keybind_sensitivity_factor_desc">
         <text>Насколько сильно нажатие клавиши изменяет угол наклона. Значение по умолчанию — ползунок посередине.</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_wheel_sensitivity_factor">
+        <text>Чувствительность колеса мыши</text>
+    </string>
+    <string id="ui_mcm_dlac_lean_dlac_wheel_sensitivity_factor_desc">
+        <text>Насколько сильно один щелчок колеса изменяет угол наклона. Значение по умолчанию — ползунок посередине.</text>
     </string>
 
     <string id="ui_mcm_dlac_lean_dlac_use_lean_for_liz_inertia_factor">
@@ -107,6 +116,9 @@
     <string id="dlac_crouch_dlac_adjustment_mode_lst_keybind">
         <text>Клавиши</text>
     </string>
+    <string id="dlac_crouch_dlac_adjustment_mode_lst_mouse_wheel">
+        <text>Колесо мыши</text>
+    </string>
     <string id="ui_mcm_dlac_crouch_dlac_mouse_sensitivity_factor">
         <text>Чувствительность мыши</text>
     </string>
@@ -118,6 +130,12 @@
     </string>
     <string id="ui_mcm_dlac_crouch_dlac_keybind_sensitivity_factor_desc">
         <text>Насколько сильно нажатие клавиши изменяет высоту. Значение по умолчанию — ползунок посередине.</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_wheel_sensitivity_factor">
+        <text>Чувствительность колеса мыши</text>
+    </string>
+    <string id="ui_mcm_dlac_crouch_dlac_wheel_sensitivity_factor_desc">
+        <text>Насколько сильно один щелчок колеса изменяет высоту. Значение по умолчанию — ползунок посередине.</text>
     </string>
     <string id="ui_mcm_dlac_crouch_dlac_adjustment_keybind_up">
         <text>Клавиша подъёма</text>
@@ -176,5 +194,11 @@
     </string>
     <string id="ui_mcm_dlac_general_dlac_adjustment_keybind_desc">
         <text>Эту клавишу нужно удерживать вместе с мышью или клавишами регулировки, чтобы начать наклон или присед. По умолчанию — LEFT-ALT.</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_wheel_target_switch_enabled">
+        <text>Переключение колеса наклон/присед</text>
+    </string>
+    <string id="ui_mcm_dlac_general_dlac_wheel_target_switch_enabled_desc">
+        <text>Если и наклон, и присед настроены на колесо мыши, колесо может управлять только одним из них одновременно. Если включено, удержание клавиши регулировки и нажатие средней кнопки мыши переключает, чем оно управляет сейчас; в остальных случаях средняя кнопка мыши работает как обычно.</text>
     </string>
 </string_table>
